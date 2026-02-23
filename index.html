@@ -40,10 +40,23 @@
       transition: background .15s;
     }
     .btn:hover { background: #4338ca; }
+    .btn-all {
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      padding: .6rem 1.4rem;
+      border-radius: 8px;
+      font-size: .95rem;
+      cursor: pointer;
+      margin-bottom: 1.5rem;
+      transition: background .15s;
+    }
+    .btn-all:hover { background: #4338ca; }
   </style>
 </head>
 <body>
   <h1>📂 Documents PDF</h1>
+  <button class="btn-all" onclick="downloadAll()">⬇ Tout télécharger</button>
   <div class="list">
     <div class="card">
       <span class="icon">📄</span>
@@ -66,5 +79,18 @@
       <a class="btn" href="/pdfs/Epitech%20-%20WinterCamp%20-%20Infographie.pdf" download="Epitech - WinterCamp - Infographie.pdf">Télécharger</a>
     </div>
   </div>
+  <script>
+    function downloadAll() {
+      const links = document.querySelectorAll('.btn');
+      links.forEach((a, i) => {
+        setTimeout(() => {
+          const tmp = document.createElement('a');
+          tmp.href = a.href;
+          tmp.download = a.download;
+          tmp.click();
+        }, i * 500);
+      });
+    }
+  </script>
 </body>
 </html>
