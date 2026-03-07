@@ -2,21 +2,55 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { subjects, session, type Subject } from './config'
 
-// Detail panel
 const selectedSubject = ref<Subject | null>(null)
 function openSubject(subject: Subject) { selectedSubject.value = subject }
 function close() { selectedSubject.value = null }
 
-// Search
 const search = ref('')
-const filteredSubjects = computed(() =>
-    subjects.filter(s =>
-        s.name.toLowerCase().includes(search.value.toLowerCase()) ||
-        s.tags.some(t => t.toLowerCase().includes(search.value.toLowerCase()))
-    )
-)
 
-// Live clock
+type DiffFilter = 'Tous' | Subject['difficulty']
+const diffFilter = ref<DiffFilter>('Tous')
+const diffFilters: DiffFilter[] = ['Tous', 'Débutant', 'Intermédiaire', 'Avancé']
+
+type SortMode = 'default' | 'az' | 'za' | 'diff-asc' | 'diff-desc'
+const sortMode = ref<SortMode>('default')
+const diffOrder = { 'Débutant': 0, 'Intermédiaire': 1, 'Avancé': 2 }
+
+const favorites = ref<Set<string>>(new Set())
+function loadFavorites() {
+    try {
+        const raw = localStorage.getItem('cc-favorites')
+        if (raw) favorites.value = new Set(JSON.parse(raw))
+    } catch {}
+}
+function toggleFavorite(e: Event, name: string) {
+    e.stopPropagation()
+    const next = new Set(favorites.value)
+    next.has(name) ? next.delete(name) : next.add(name)
+    favorites.value = next
+    localStorage.setItem('cc-favorites', JSON.stringify([...next]))
+}
+const showFavOnly = ref(false)
+
+const filteredSubjects = computed(() => {
+    let list = [...subjects]
+
+    if (showFavOnly.value) list = list.filter(s => favorites.value.has(s.name))
+    if (diffFilter.value !== 'Tous') list = list.filter(s => s.difficulty === diffFilter.value)
+    if (search.value)
+        list = list.filter(s =>
+            s.name.toLowerCase().includes(search.value.toLowerCase()) ||
+            s.tags.some(t => t.toLowerCase().includes(search.value.toLowerCase()))
+        )
+
+    if (sortMode.value === 'az') list.sort((a, b) => a.name.localeCompare(b.name))
+    else if (sortMode.value === 'za') list.sort((a, b) => b.name.localeCompare(a.name))
+    else if (sortMode.value === 'diff-asc') list.sort((a, b) => diffOrder[a.difficulty] - diffOrder[b.difficulty])
+    else if (sortMode.value === 'diff-desc') list.sort((a, b) => diffOrder[b.difficulty] - diffOrder[a.difficulty])
+
+    return list
+})
+
 const clock = ref('')
 let clockInterval: ReturnType<typeof setInterval>
 function updateClock() {
@@ -24,22 +58,20 @@ function updateClock() {
     clock.value = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
-// ESC key
 function onKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') close()
 }
 
-// Difficulty color
 function difficultyColor(d: Subject['difficulty']) {
     if (d === 'Débutant') return '#4ade80'
     if (d === 'Intermédiaire') return '#facc15'
     return '#f87171'
 }
 
-// Stats
 const totalFiles = computed(() => subjects.reduce((acc, s) => acc + s.files.length, 0))
 
 onMounted(() => {
+    loadFavorites()
     updateClock()
     clockInterval = setInterval(updateClock, 1000)
     window.addEventListener('keydown', onKeydown)
@@ -113,6 +145,35 @@ onUnmounted(() => {
                         <FontAwesomeIcon :icon="['fas', 'xmark']" />
                     </button>
                 </div>
+                <div class="toolbar">
+                    <div class="diff-filters">
+                        <button
+                            v-for="f in diffFilters"
+                            :key="f"
+                            class="diff-filter-btn"
+                            :class="{ active: diffFilter === f }"
+                            :style="f !== 'Tous' ? { '--diff-color': difficultyColor(f as any) } : {}"
+                            @click="diffFilter = f"
+                        >{{ f }}</button>
+                        <button
+                            class="diff-filter-btn fav-btn"
+                            :class="{ active: showFavOnly }"
+                            @click="showFavOnly = !showFavOnly"
+                        >
+                            <FontAwesomeIcon :icon="['fas', 'star']" /> Favoris
+                        </button>
+                    </div>
+                    <div class="sort-wrapper">
+                        <FontAwesomeIcon :icon="['fas', 'arrow-up-wide-short']" class="sort-icon" />
+                        <select v-model="sortMode" class="sort-select">
+                            <option value="default">Par défaut</option>
+                            <option value="az">Nom A → Z</option>
+                            <option value="za">Nom Z → A</option>
+                            <option value="diff-asc">Difficulté ↑</option>
+                            <option value="diff-desc">Difficulté ↓</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="subjects-grid">
                     <div
                         class="subject-card"
@@ -126,6 +187,14 @@ onUnmounted(() => {
                             <span class="difficulty-badge" :style="{ color: difficultyColor(subject.difficulty), borderColor: difficultyColor(subject.difficulty) }">
                                 {{ subject.difficulty }}
                             </span>
+                            <button
+                                class="star-btn"
+                                :class="{ starred: favorites.has(subject.name) }"
+                                @click="(e) => toggleFavorite(e, subject.name)"
+                                :title="favorites.has(subject.name) ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+                            >
+                                <FontAwesomeIcon :icon="['fas', 'star']" />
+                            </button>
                         </div>
                         <div class="subject-tags">
                             <span class="tag" v-for="tag in subject.tags" :key="tag">{{ tag }}</span>
@@ -534,6 +603,118 @@ html, body {
     font-size: 32px;
     color: #3a3a3a;
 }
+
+/* Toolbar */
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.diff-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.diff-filter-btn {
+    background: none;
+    border: 1px solid #3a3a3a;
+    color: #aaa;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.diff-filter-btn:hover {
+    border-color: #809dfd;
+    color: #fff;
+}
+
+.diff-filter-btn.active {
+    background-color: var(--diff-color, #809dfd);
+    border-color: var(--diff-color, #809dfd);
+    color: #111;
+}
+
+.fav-btn svg {
+    color: #facc15;
+}
+
+.fav-btn.active {
+    background-color: #facc15;
+    border-color: #facc15;
+    color: #111;
+}
+
+.sort-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 6px 12px;
+    transition: 0.2s;
+}
+
+.sort-wrapper:focus-within {
+    border-color: #809dfd;
+}
+
+.sort-icon {
+    color: #809dfd;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.sort-select {
+    background: none;
+    border: none;
+    outline: none;
+    color: #ccc;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.sort-select option {
+    background-color: #2a2a2a;
+    color: #fff;
+}
+
+/* Star button */
+.star-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #3a3a3a;
+    font-size: 14px;
+    margin-left: 6px;
+    padding: 0;
+    transition: 0.2s;
+    flex-shrink: 0;
+}
+
+.star-btn:hover {
+    color: #facc15;
+    transform: scale(1.2);
+}
+
+.star-btn.starred {
+    color: #facc15;
+}
+
 .subjects-grid {
     display: flex;
     flex-wrap: wrap;
