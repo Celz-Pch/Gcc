@@ -4,6 +4,7 @@ export interface Subject {
     files: string[]
     difficulty: 'Débutant' | 'Intermédiaire' | 'Avancé'
     tags: string[]
+    isNew?: boolean
 }
 
 export interface Session {
@@ -33,6 +34,7 @@ export const subjects: Subject[] = [
         description: 'Projet HTML/CSS/JavaScript inspiré du jeu mythique Universal Paperclips (Frank Lantz, 2017). Tu vas recréer les bases d\'un idle game en construisant une usine à trombones interactive sur JSFiddle. Au programme : structurer une page avec HTML, la styliser avec CSS, puis lui donner vie en JavaScript — variables, getElementById, addEventListener, setInterval et conditions. À la fin, ton usine fabrique des trombones au clic, gère un stock, vend automatiquement et ajuste son prix de vente.',
         files: ['Paperclip_Factory.pdf'],
         difficulty: 'Débutant',
-        tags: ['HTML', 'CSS', 'JavaScript']
+        tags: ['HTML', 'CSS', 'JavaScript'],
+        isNew: true
     }
 ]

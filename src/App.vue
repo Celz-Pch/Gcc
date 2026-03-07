@@ -32,6 +32,33 @@ function toggleFavorite(e: Event, name: string) {
 }
 const showFavOnly = ref(false)
 
+type ViewMode = 'grid' | 'list'
+const viewMode = ref<ViewMode>('grid')
+
+const activeFiltersCount = computed(() => {
+    let c = 0
+    if (search.value) c++
+    if (diffFilter.value !== 'Tous') c++
+    if (showFavOnly.value) c++
+    if (sortMode.value !== 'default') c++
+    return c
+})
+function resetFilters() {
+    search.value = ''
+    diffFilter.value = 'Tous'
+    showFavOnly.value = false
+    sortMode.value = 'default'
+}
+
+const copiedSubject = ref<string | null>(null)
+function copyLink(e: Event, name: string) {
+    e.stopPropagation()
+    const url = `${window.location.origin}${window.location.pathname}?sujet=${encodeURIComponent(name)}`
+    navigator.clipboard.writeText(url)
+    copiedSubject.value = name
+    setTimeout(() => { copiedSubject.value = null }, 2000)
+}
+
 const filteredSubjects = computed(() => {
     let list = [...subjects]
 
@@ -100,10 +127,6 @@ onUnmounted(() => {
                 <div class="nav-container">                    
                     <h1>OVERVIEW<span>_</span></h1>
                     <div class="btn-container">
-                        <!-- <button class="btn">
-                            <FontAwesomeIcon :icon="['fas', 'gauge']" />
-                            DashBoard
-                        </button> -->
                         <button class="btn">
                             <FontAwesomeIcon :icon="['fas', 'book']" />
                             Ressources
@@ -159,9 +182,7 @@ onUnmounted(() => {
                             class="diff-filter-btn fav-btn"
                             :class="{ active: showFavOnly }"
                             @click="showFavOnly = !showFavOnly"
-                        >
-                            <FontAwesomeIcon :icon="['fas', 'star']" /> Favoris
-                        </button>
+                        >Favoris</button>
                     </div>
                     <div class="sort-wrapper">
                         <FontAwesomeIcon :icon="['fas', 'arrow-up-wide-short']" class="sort-icon" />
@@ -173,8 +194,20 @@ onUnmounted(() => {
                             <option value="diff-desc">Difficulté ↓</option>
                         </select>
                     </div>
+                    <div class="view-toggle">
+                        <button :class="{ active: viewMode === 'grid' }" @click="viewMode = 'grid'" title="Vue grille">
+                            <FontAwesomeIcon :icon="['fas', 'grip']" />
+                        </button>
+                        <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'" title="Vue liste">
+                            <FontAwesomeIcon :icon="['fas', 'list']" />
+                        </button>
+                    </div>
+                    <button v-if="activeFiltersCount > 0" class="reset-filters-btn" @click="resetFilters">
+                        <FontAwesomeIcon :icon="['fas', 'xmark']" />
+                        Réinitialiser ({{ activeFiltersCount }})
+                    </button>
                 </div>
-                <div class="subjects-grid">
+                <div class="subjects-grid" :class="viewMode">
                     <div
                         class="subject-card"
                         v-for="subject in filteredSubjects"
@@ -184,6 +217,7 @@ onUnmounted(() => {
                         <div class="subject-card-header">
                             <FontAwesomeIcon :icon="['fas', 'book']" class="subject-icon" />
                             <span class="subject-name">{{ subject.name }}</span>
+                            <span v-if="subject.isNew" class="new-badge">NEW</span>
                             <span class="difficulty-badge" :style="{ color: difficultyColor(subject.difficulty), borderColor: difficultyColor(subject.difficulty) }">
                                 {{ subject.difficulty }}
                             </span>
@@ -219,9 +253,15 @@ onUnmounted(() => {
                                 <FontAwesomeIcon :icon="['fas', 'book']" class="subject-icon" />
                                 <h2>{{ selectedSubject.name }}</h2>
                             </div>
-                            <button class="close-btn" @click="close">
-                                <FontAwesomeIcon :icon="['fas', 'xmark']" />
-                            </button>
+                            <div class="detail-header-actions">
+                                <button class="copy-link-btn" @click="(e) => copyLink(e, selectedSubject!.name)">
+                                    <FontAwesomeIcon :icon="copiedSubject === selectedSubject.name ? ['fas', 'check'] : ['fas', 'link']" />
+                                    {{ copiedSubject === selectedSubject.name ? 'Copié !' : 'Lien' }}
+                                </button>
+                                <button class="close-btn" @click="close">
+                                    <FontAwesomeIcon :icon="['fas', 'xmark']" />
+                                </button>
+                            </div>
                         </div>
                         <p class="detail-desc">{{ selectedSubject.description }}</p>
                         <div class="detail-tags">
@@ -713,6 +753,136 @@ html, body {
 
 .star-btn.starred {
     color: #facc15;
+}
+
+/* View toggle */
+.view-toggle {
+    display: flex;
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.view-toggle button {
+    background: none;
+    border: none;
+    color: #555;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: 0.2s;
+}
+
+.view-toggle button.active {
+    background-color: #809dfd;
+    color: #fff;
+}
+
+.view-toggle button:hover:not(.active) {
+    color: #fff;
+}
+
+/* Reset filters button */
+.reset-filters-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px solid #f87171;
+    color: #f87171;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.reset-filters-btn:hover {
+    background-color: #f87171;
+    color: #fff;
+}
+
+/* NEW badge */
+.new-badge {
+    background-color: #809dfd;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* List mode */
+.subjects-grid.list {
+    flex-direction: column;
+    gap: 10px;
+}
+
+.subjects-grid.list .subject-card {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 16px;
+}
+
+.subjects-grid.list .subject-tags {
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+
+.subjects-grid.list .subject-footer {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.subjects-grid.list .subject-hint {
+    display: none;
+}
+
+/* Detail header actions */
+.detail-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Copy link button */
+.copy-link-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px solid #3a3a3a;
+    color: #aaa;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.copy-link-btn:hover {
+    border-color: #809dfd;
+    color: #809dfd;
+}
+
+.copy-link-btn svg {
+    color: inherit;
 }
 
 .subjects-grid {
