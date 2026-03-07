@@ -1,16 +1,53 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { subjects, session, type Subject } from './config'
 
+// Detail panel
 const selectedSubject = ref<Subject | null>(null)
+function openSubject(subject: Subject) { selectedSubject.value = subject }
+function close() { selectedSubject.value = null }
 
-function openSubject(subject: Subject) {
-    selectedSubject.value = subject
+// Search
+const search = ref('')
+const filteredSubjects = computed(() =>
+    subjects.filter(s =>
+        s.name.toLowerCase().includes(search.value.toLowerCase()) ||
+        s.tags.some(t => t.toLowerCase().includes(search.value.toLowerCase()))
+    )
+)
+
+// Live clock
+const clock = ref('')
+let clockInterval: ReturnType<typeof setInterval>
+function updateClock() {
+    const now = new Date()
+    clock.value = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
-function close() {
-    selectedSubject.value = null
+// ESC key
+function onKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') close()
 }
+
+// Difficulty color
+function difficultyColor(d: Subject['difficulty']) {
+    if (d === 'Débutant') return '#4ade80'
+    if (d === 'Intermédiaire') return '#facc15'
+    return '#f87171'
+}
+
+// Stats
+const totalFiles = computed(() => subjects.reduce((acc, s) => acc + s.files.length, 0))
+
+onMounted(() => {
+    updateClock()
+    clockInterval = setInterval(updateClock, 1000)
+    window.addEventListener('keydown', onKeydown)
+})
+onUnmounted(() => {
+    clearInterval(clockInterval)
+    window.removeEventListener('keydown', onKeydown)
+})
 </script>
 
 <template>
@@ -20,6 +57,10 @@ function close() {
             <div class="header-brand">
                 <span class="brand-coding">Coding</span><span class="brand-club">Club</span>
                 <span class="brand-epitech">Epitech</span>
+            </div>
+            <div class="header-clock">
+                <FontAwesomeIcon :icon="['fas', 'clock']" />
+                <span>{{ clock }}</span>
             </div>
         </div>
         <div class="stock-container">
@@ -53,18 +94,41 @@ function close() {
                             <FontAwesomeIcon :icon="['fas', 'location-dot']" />
                             <span>{{ session.location }}</span>
                         </div>
+                        <div class="session-stats">
+                            <div class="session-stat">
+                                <FontAwesomeIcon :icon="['fas', 'book']" />
+                                <span>{{ subjects.length }} sujet{{ subjects.length > 1 ? 's' : '' }}</span>
+                            </div>
+                            <div class="session-stat">
+                                <FontAwesomeIcon :icon="['fas', 'file']" />
+                                <span>{{ totalFiles }} fichier{{ totalFiles > 1 ? 's' : '' }}</span>
+                            </div>
+                        </div>
                     </div>
+                </div>
+                <div class="search-bar">
+                    <FontAwesomeIcon :icon="['fas', 'magnifying-glass']" class="search-icon" />
+                    <input v-model="search" type="text" placeholder="Rechercher un sujet ou un tag..." />
+                    <button v-if="search" class="search-clear" @click="search = ''">
+                        <FontAwesomeIcon :icon="['fas', 'xmark']" />
+                    </button>
                 </div>
                 <div class="subjects-grid">
                     <div
                         class="subject-card"
-                        v-for="subject in subjects"
+                        v-for="subject in filteredSubjects"
                         :key="subject.name"
                         @click="openSubject(subject)"
                     >
                         <div class="subject-card-header">
                             <FontAwesomeIcon :icon="['fas', 'book']" class="subject-icon" />
                             <span class="subject-name">{{ subject.name }}</span>
+                            <span class="difficulty-badge" :style="{ color: difficultyColor(subject.difficulty), borderColor: difficultyColor(subject.difficulty) }">
+                                {{ subject.difficulty }}
+                            </span>
+                        </div>
+                        <div class="subject-tags">
+                            <span class="tag" v-for="tag in subject.tags" :key="tag">{{ tag }}</span>
                         </div>
                         <div class="subject-footer">
                             <FontAwesomeIcon :icon="['fas', 'file']" />
@@ -73,6 +137,10 @@ function close() {
                                 <FontAwesomeIcon :icon="['fas', 'circle-info']" /> Cliquer pour voir les détails
                             </span>
                         </div>
+                    </div>
+                    <div class="no-results" v-if="filteredSubjects.length === 0">
+                        <FontAwesomeIcon :icon="['fas', 'magnifying-glass']" />
+                        <span>Aucun sujet trouvé pour "{{ search }}"</span>
                     </div>
                 </div>
                 <div class="detail-overlay" v-if="selectedSubject" @click.self="close">
@@ -87,6 +155,12 @@ function close() {
                             </button>
                         </div>
                         <p class="detail-desc">{{ selectedSubject.description }}</p>
+                        <div class="detail-tags">
+                            <span class="tag" v-for="tag in selectedSubject.tags" :key="tag">{{ tag }}</span>
+                            <span class="difficulty-badge" :style="{ color: difficultyColor(selectedSubject.difficulty), borderColor: difficultyColor(selectedSubject.difficulty) }">
+                                {{ selectedSubject.difficulty }}
+                            </span>
+                        </div>
                         <div class="detail-divider"></div>
                         <h3 class="detail-files-title">
                             <FontAwesomeIcon :icon="['fas', 'download']" /> Ressources
@@ -171,6 +245,23 @@ html, body {
     color: #aaa;
     font-size: 13px;
     letter-spacing: 2px;
+}
+
+.header-clock {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-left: 24px;
+    margin-right: 24px;
+    font-family: 'Inter', monospace;
+    font-size: 13px;
+    color: #aaa;
+    letter-spacing: 1px;
+}
+
+.header-clock svg {
+    color: #809dfd;
+    font-size: 13px;
 }
 
 .stock-container {
@@ -319,7 +410,130 @@ html, body {
     color: #ccc;
 }
 
-/* Subjects grid */
+.session-stats {
+    display: flex;
+    gap: 14px;
+    margin-top: 4px;
+}
+
+.session-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #555;
+}
+
+.session-stat svg {
+    color: #809dfd;
+    font-size: 11px;
+}
+
+/* Search bar */
+.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 20px;
+    transition: 0.2s;
+}
+
+.search-bar:focus-within {
+    border-color: #809dfd;
+}
+
+.search-icon {
+    color: #555;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.search-bar input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+}
+
+.search-bar input::placeholder {
+    color: #555;
+}
+
+.search-clear {
+    background: none;
+    border: none;
+    color: #555;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+    padding: 0;
+}
+
+.search-clear:hover {
+    color: #fff;
+}
+
+/* Tags & difficulty */
+.subject-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.detail-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tag {
+    background-color: #1f1f1f;
+    color: #809dfd;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid #2e2e2e;
+}
+
+.difficulty-badge {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* No results */
+.no-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: #555;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    margin-top: 60px;
+    width: 100%;
+}
+
+.no-results svg {
+    font-size: 32px;
+    color: #3a3a3a;
+}
 .subjects-grid {
     display: flex;
     flex-wrap: wrap;
