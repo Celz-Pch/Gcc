@@ -32,7 +32,6 @@ export default defineConfig({
           const fileName = req.url?.replace(/^\//, '') ?? ''
           if (!fileName) return next()
           const filePath = resolve(dataDir, fileName)
-          res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`)
           const stream = createReadStream(filePath)
           stream.on('error', () => next())
           stream.pipe(res)

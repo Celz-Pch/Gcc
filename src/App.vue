@@ -97,10 +97,16 @@ function close() {
                                     <FontAwesomeIcon :icon="['fas', 'file']" class="file-icon" />
                                     <span class="file-name">{{ file }}</span>
                                 </div>
-                                <a :href="`/data/${file}`" :download="file" class="download-btn">
-                                    <FontAwesomeIcon :icon="['fas', 'download']" />
-                                    Télécharger
-                                </a>
+                                <div class="file-actions">
+                                    <a :href="`/data/${file}`" target="_blank" class="view-btn">
+                                        <FontAwesomeIcon :icon="['fas', 'eye']" />
+                                        Voir
+                                    </a>
+                                    <a :href="`/data/${file}`" :download="file" class="download-btn">
+                                        <FontAwesomeIcon :icon="['fas', 'download']" />
+                                        Télécharger
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -518,6 +524,34 @@ html, body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.file-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.view-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: transparent;
+    color: #809dfd;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #809dfd;
+    flex-shrink: 0;
+    transition: 0.2s;
+}
+
+.view-btn:hover {
+    background-color: #809dfd;
+    color: #fff;
 }
 
 .download-btn {
