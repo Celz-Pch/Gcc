@@ -1,13 +1,12 @@
 import { fileURLToPath, URL } from 'node:url'
 import { readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { createReadStream } from 'node:fs'
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
-const dataDir = resolve(process.cwd(), 'data')
+const dataDir = resolve(process.cwd(), 'public/data')
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -26,15 +25,6 @@ export default defineConfig({
             res.setHeader('Content-Type', 'application/json')
             res.end(JSON.stringify([]))
           }
-        })
-
-        server.middlewares.use('/data', (req, res, next) => {
-          const fileName = req.url?.replace(/^\//, '') ?? ''
-          if (!fileName) return next()
-          const filePath = resolve(dataDir, fileName)
-          const stream = createReadStream(filePath)
-          stream.on('error', () => next())
-          stream.pipe(res)
         })
       }
     }
