@@ -22,6 +22,6 @@ export const subjects: Subject[] = [
     {
         name: 'Mycépaint',
         description: 'Projet Python/Pygame consistant à créer un logiciel de dessin. Au service du roi Weegee, vous développez une application permettant de tracer des lignes à la souris, de remplir des zones avec de la couleur (bucket fill) et d\'effacer le canvas. Le projet introduit la gestion de fenêtre, la boucle d\'événements, la détection des entrées souris/clavier et les fonctions de dessin de Pygame.',
-        files: ['Mycépaint.pdf']
+        files: ['Mycepaint_2026.pdf']
     }
 ]
