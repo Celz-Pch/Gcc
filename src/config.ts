@@ -25,7 +25,7 @@ export const subjects: Subject[] = [
     {
         name: 'Mycépaint',
         description: 'Projet Python/Pygame consistant à créer un logiciel de dessin. Au service du roi Weegee, vous développez une application permettant de tracer des lignes à la souris, de remplir des zones avec de la couleur (bucket fill) et d\'effacer le canvas. Le projet introduit la gestion de fenêtre, la boucle d\'événements, la détection des entrées souris/clavier et les fonctions de dessin de Pygame.',
-        files: ['Mycepaint_2026.pdf'],
+        files: ['Mycépaint.pdf'],
         difficulty: 'Intermédiaire',
         tags: ['Python', 'Pygame']
     },
@@ -35,6 +35,12 @@ export const subjects: Subject[] = [
         files: ['Paperclip_Factory.pdf'],
         difficulty: 'Débutant',
         tags: ['HTML', 'CSS', 'JavaScript'],
-        isNew: true
-    }
+    },
+    {
+        name: 'Devine le Nombre',
+        description: 'Projet Python consistant à créer un jeu de devinette. Vous développez une application permettant à l\'utilisateur de deviner un nombre aléatoire généré par l\'ordinateur. Le projet introduit les bases de la programmation en Python, notamment les variables, les conditions et les boucles.',
+        files: ['Devine_le_Nombre.pdf'],
+        difficulty: 'Débutant',
+        tags: ['Python']
+    },
 ]
