@@ -23,24 +23,17 @@ export const session: Session = {
 
 export const subjects: Subject[] = [
     {
-        name: 'Mycépaint',
-        description: 'Projet Python/Pygame consistant à créer un logiciel de dessin. Au service du roi Weegee, vous développez une application permettant de tracer des lignes à la souris, de remplir des zones avec de la couleur (bucket fill) et d\'effacer le canvas. Le projet introduit la gestion de fenêtre, la boucle d\'événements, la détection des entrées souris/clavier et les fonctions de dessin de Pygame.',
-        files: ['Mycepaint_2026.pdf'],
+        name: 'Workshop C',
+        description: 'Workshop d\'introduction au langage C. Découvrez les bases de la programmation en C : variables, conditions, boucles, fonctions et pointeurs.',
+        files: ['WorkshopC.pdf'],
+        difficulty: 'Débutant',
+        tags: ['C']
+    },
+    {
+        name: 'Workshop C++',
+        description: 'Workshop d\'introduction au langage C++. Explorez la programmation orientée objet avec C++ : classes, objets, héritage et polymorphisme.',
+        files: ['WorkshopCPP.pdf'],
         difficulty: 'Intermédiaire',
-        tags: ['Python', 'Pygame']
-    },
-    {
-        name: 'Paperclip Factory',
-        description: 'Projet HTML/CSS/JavaScript inspiré du jeu mythique Universal Paperclips (Frank Lantz, 2017). Tu vas recréer les bases d\'un idle game en construisant une usine à trombones interactive sur JSFiddle. Au programme : structurer une page avec HTML, la styliser avec CSS, puis lui donner vie en JavaScript — variables, getElementById, addEventListener, setInterval et conditions. À la fin, ton usine fabrique des trombones au clic, gère un stock, vend automatiquement et ajuste son prix de vente.',
-        files: ['Paperclip_Factory.pdf'],
-        difficulty: 'Débutant',
-        tags: ['HTML', 'CSS', 'JavaScript'],
-    },
-    {
-        name: 'Devine le Nombre',
-        description: 'Projet Python consistant à créer un jeu de devinette. Vous développez une application permettant à l\'utilisateur de deviner un nombre aléatoire généré par l\'ordinateur. Le projet introduit les bases de la programmation en Python, notamment les variables, les conditions et les boucles.',
-        files: ['Devine_le_Nombre.pdf'],
-        difficulty: 'Débutant',
-        tags: ['Python']
+        tags: ['C++']
     },
 ]
